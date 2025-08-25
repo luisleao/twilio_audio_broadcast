@@ -1,7 +1,7 @@
 ![Screenshot](assets/screenshot.png)
 # Twilio Audio Broadcast
 
-This project implements an audio broadcast solution using Twilio Voice API, allowing an administrator to start an audio conference and participants to connect and listen to the broadcast.
+This project implements an audio broadcast solution using Twilio Voice API, allowing an administrator to start an audio conference and participants to connect and listen to the broadcast. Unlike traditional web-based audio streaming, this solution uses cellular voice communication instead of mobile data. As a result, it is suitable for events where participants may have unstable or limited mobile internet, since they can join and listen using regular phone calls.
 
 ## Features
 
