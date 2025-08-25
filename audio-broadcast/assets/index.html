@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Twilio Broadcast</title>
+  </head>
+  <body>
+  <div class="container">
+    <h1>Twilio VoIP Broadcast</h1>
+    <button id="init-btn" class="btn init-btn">Inicializar</button>
+    <div id="status" class="status" style="display:none;">Pronto para ligar</div>
+    <button id="call-btn" class="btn call-btn" style="display:none;">Ligar</button>
+    <button id="hangup-btn" class="btn hangup-btn" style="display:none;">Desligar</button>
+  </div>
+  <script src="https://sdk.twilio.com/js/client/v1.13/twilio.min.js"></script>
+  <script>
+    let device;
+    let connection;
+
+    const callBtn = document.getElementById('call-btn');
+    const hangupBtn = document.getElementById('hangup-btn');
+    const statusDiv = document.getElementById('status');
+    const initBtn = document.getElementById('init-btn');
+
+    function setStatus(text) {
+      statusDiv.textContent = text;
+    }
+
+    function showCallButton() {
+      callBtn.style.display = 'block';
+      hangupBtn.style.display = 'none';
+      callBtn.disabled = false;
+    }
+
+    function showHangupButton() {
+      callBtn.style.display = 'none';
+      hangupBtn.style.display = 'inline-block';
+    }
+
+    async function getToken() {
+      const identity = crypto.randomUUID();
+      const res = await fetch('/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ identity })
+      });
+      const data = await res.json();
+      return data.token;
+    }
+
+    initBtn.onclick = async () => {
+      setStatus('Inicializando...');
+      statusDiv.style.display = 'block';
+      await setupDevice();
+      initBtn.style.display = 'none';
+      callBtn.style.display = 'block';
+      callBtn.disabled = false;
+    };
+
+    callBtn.disabled = true;
+    callBtn.style.display = 'none';
+    statusDiv.style.display = 'none';
+
+    async function setupDevice() {
+      const token = await getToken();
+      device = new Twilio.Device(token, { debug: false });
+
+      device.on('ready', () => {
+        setStatus('Pronto para ligar');
+        statusDiv.style.display = 'block';
+        showCallButton();
+      });
+      device.on('error', error => {
+        setStatus('Erro: ' + error.message);
+        statusDiv.style.display = 'block';
+      });
+      device.on('connect', () => {
+        setStatus('Em chamada...');
+        showHangupButton();
+      });
+      device.on('disconnect', () => {
+        setStatus('Chamada finalizada');
+        showCallButton();
+      });
+    }
+
+    callBtn.onclick = () => {
+      if (!device) return;
+      connection = device.connect({ To: '0' });
+    };
+
+    hangupBtn.onclick = () => {
+      if (connection) connection.disconnect();
+    };
+  </script>
+  <style>
+    body {
+      background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+      font-family: 'Segoe UI', Arial, sans-serif;
+      color: #fff;
+      margin: 0;
+      height: 100vh;
+    }
+    .container {
+      max-width: 350px;
+      margin: 80px auto;
+      background: rgba(0,0,0,0.3);
+      border-radius: 16px;
+      padding: 32px 24px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+      text-align: center;
+    }
+    h1 {
+      margin-bottom: 24px;
+      font-weight: 600;
+      font-size: 1.6em;
+      letter-spacing: 1px;
+    }
+    .status {
+      margin-bottom: 32px;
+      font-size: 1.1em;
+      font-weight: 500;
+      min-height: 24px;
+    }
+    .btn {
+      padding: 12px 32px;
+      border: none;
+      border-radius: 24px;
+      font-size: 1em;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+      margin: 0 8px;
+    }
+    .call-btn {
+      background: #43e97b;
+      color: #222;
+    }
+    .call-btn:hover {
+      background: #38c172;
+    }
+    .hangup-btn {
+      background: #ff4b2b;
+      color: #fff;
+    }
+    .hangup-btn:hover {
+      background: #c0392b;
+    }
+  </style>
+  </body>
+</html>
